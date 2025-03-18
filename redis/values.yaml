@@ -1,0 +1,10 @@
+redis:
+  repository: redis
+  pullPolicy: IfNotPresent
+  replicas: 0
+  enableSpot: false
+  service:
+    type: ClusterIP
+    port: 6379
+  replicaCount: 0
+  

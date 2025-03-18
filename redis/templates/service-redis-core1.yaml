@@ -1,0 +1,35 @@
+{{ if gt .Values.redis.replicas  0.0 }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app.kubernetes.io/name: redis
+
+  {{- if or (.Values.redis.service.annotations) (.Values.redis.service.externalDns) }}
+  annotations:
+  {{- if  (.Values.redis.service.annotations)}}
+  {{ include "common.tplvalues.render" ( dict "value" .Values.redis.service.annotations "context" $) | nindent 4 }}
+  {{- end}}
+  {{- if  (.Values.redis.service.externalDns) }}
+    external-dns.alpha.kubernetes.io/internal-hostname: {{ .Values.redis.service.name  }}.{{ $.Release.Namespace }}.dev.local
+    external-dns.alpha.kubernetes.io/access: private
+  {{- end}}
+  {{- end }}
+
+
+spec:
+  {{- if not (.Values.redis.service.externalDns) }}
+  type: {{ .Values.redis.service.type }}
+  {{- else }}
+  clusterIP: None
+  {{- end }}
+  ports:
+    - port: {{ .Values.redis.service.port }}
+      targetPort: {{ .Values.redis.service.port }}
+      protocol: TCP
+      name: tcp-redis
+      
+  selector:
+      app.kubernetes.io/name: redis
+{{ end }}

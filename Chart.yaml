@@ -1,0 +1,13 @@
+name: repro-cluster
+description: A Helm chart for cluster to reproduce contextAccessor error
+version: 0.0.1
+apiVersion: v2
+keywords:
+  - kubernetes-applications
+type: application
+icon: "https://www.guidedchoice.com/wp-content/themes/guidedchoice/library/images/gc_logo.svg"
+
+dependencies:
+  - name: elasticsearch
+    version: "21.4.8"
+    repository: "https://charts.bitnami.com/bitnami"

@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: redis
+  name: redis
+spec:
+  minReadySeconds: 30
+  replicas: {{.Values.redis.replicas}}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/rewriteAppHTTPProbers: "false"
+      labels:
+        io.guidedchoice.network/core: "true"
+        app.kubernetes.io/name: redis
+        app: redis
+        version: "{{ .Values.redis.tag }}"
+    spec:
+      priorityClassName: high-{{ $.Release.Namespace }}
+      {{- if $.Values.redis.enableSpot }}
+      tolerations:
+        - key: "kubernetes.azure.com/scalesetpriority"
+          operator: "Equal"
+          value: "spot"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "kubernetes.azure.com/scalesetpriority"
+                    operator: In
+                    values:
+                      - "spot"
+      {{- end }}
+      nodeSelector:
+        {{ toYaml $.Values.global.nodePool}}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      containers:
+      - args:
+        - redis-server
+        - /usr/local/etc/redis/redis.conf
+        image: "{{ .Values.redis.repository }}:{{ .Values.redis.tag  }}"
+        imagePullPolicy: {{ .Values.redis.pullPolicy }}
+        name: redis
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        ports:
+          - containerPort: 6379
+        resources:
+          limits:
+            memory: "1280Mi"
+            cpu: "8"
+          requests:
+            memory: "1280Mi"
+            cpu: "100m"
+        volumeMounts:
+        - mountPath: /usr/local/etc/redis/redis.conf
+          name: redis-config
+          subPath: redis.conf
+      restartPolicy: Always
+
+      volumes:
+      - configMap:
+          items:
+          - key: redis.conf
+            path: redis.conf
+          name: redis-config
+        name: redis-config
+
