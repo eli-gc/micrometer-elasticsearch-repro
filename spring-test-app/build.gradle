@@ -1,0 +1,129 @@
+plugins {
+	id "jacoco"
+    id 'org.springframework.boot' version '3.3.8'
+    id "com.github.ManifestClasspath" version "0.1.0-RELEASE"
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'java-library'
+}
+
+//group = 'com.guidedchoice'
+//version = "${version != 'unspecified' ? version : '0.1'}"
+//sourceCompatibility = '1.21'
+//
+//repositories {
+//    maven {
+//		url "https://repo.guidedchoice.com:1443/artifactory/libs-release/"
+//        credentials {
+//            username = "${artifactory_user}"
+//            password = "${artifactory_password}"
+//        }
+//    }
+//
+//}
+ext {
+    	
+    springCloudVersion = '2023.0.5'
+}
+
+springBoot {
+    buildInfo()
+}
+
+
+dependencyManagement {
+    imports {
+//        mavenBom 'com.guidedchoice.micro:bom:3.3.8.2'
+        mavenBom("com.azure.spring:spring-cloud-azure-dependencies:5.19.0")
+	mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	
+    }
+}
+
+dependencies {
+	testImplementation "org.mockito:mockito-subclass"
+	implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter'
+	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+		implementation group: 'io.github.openfeign', name: 'feign-micrometer'
+    	
+    // implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-undertow'
+    api 'org.springframework.cloud:spring-cloud-starter-config'
+    api('org.springframework.boot:spring-boot-starter-actuator')
+    
+ 	implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-kubernetes-fabric8'
+ 	implementation group: 'org.springframework.cloud', name: 'spring-cloud-kubernetes-fabric8-istio'
+ 	implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-kubernetes-fabric8-loadbalancer'
+	api group: 'com.github.ben-manes.caffeine', name: 'caffeine'
+    api('org.springframework.cloud:spring-cloud-starter-openfeign')
+    api('org.springframework.cloud:spring-cloud-starter-stream-kafka')
+
+    api group: 'com.univocity', name: 'univocity-parsers'
+
+    api group: 'org.apache.logging.log4j', name: 'log4j-layout-template-json'
+    api("org.springframework.boot:spring-boot-starter-log4j2")
+    api group: 'com.lmax', name: 'disruptor'
+
+    //swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui'
+
+//    api("com.guidedchoice.micro:base")
+//    api("com.guidedchoice.data-persistence:data-persistence-models")
+//    api('com.guidedchoice.plan:plan-models')
+//    api("com.guidedchoice.profile:profile-models")
+//    api("com.guidedchoice.transactions:transactions-models")
+//    api('com.guidedchoice.accounts:accounts-models')
+//    api('com.guidedchoice.engine:engine-models')
+//    api("com.guidedchoice.offboard:offboard-models")
+//    api('com.guidedchoice.eventLogger:event-logger-models')
+//    //api("com.guidedchoice.common:guidedchoice-common:${commonModelsVersion}")
+//    api("com.guidedchoice.common:common")
+//    api('com.guidedchoice.util:crypt')
+//    implementation "com.guidedchoice.securityInformation:securityInformation-models"
+    api 'io.micrometer:micrometer-registry-elastic'
+    api 'io.micrometer:micrometer-tracing-bridge-brave'
+    //elastic
+    api("org.springframework.data:spring-data-elasticsearch")
+
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    implementation 'com.azure:azure-storage-blob'
+    implementation 'com.azure:azure-storage-file-share'
+    api 'io.micrometer:micrometer-tracing-bridge-brave:1.3.9'
+
+    api('com.jcraft:jsch:0.1.55')
+
+//    api project(':atmos-models')
+//    api project(':atmos-spreadsheet')
+//
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+    testImplementation("org.springframework.cloud:spring-cloud-stream-test-binder") {
+        artifact {
+            name = "spring-cloud-stream-test-binder"
+            extension = "jar"
+            type = "test-jar"
+        }
+    }
+}
+
+configurations.implementation {
+    exclude module: 'spring-boot-starter-logging'
+    exclude module: 'spring-boot-starter-tomcat'
+}
+
+test {
+	useJUnitPlatform()
+	ignoreFailures = true
+	maxParallelForks = Runtime.runtime.availableProcessors()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
